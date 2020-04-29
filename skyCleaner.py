@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr 21 19:14:52 2020
+
+@author: gerard
+"""
+
 #### Image processing ####
 import cv2
 import matplotlib.pyplot as plt
@@ -15,7 +23,7 @@ from astropy.io import fits
 #### Data Flags for classification and usage #####
 
 FLAT_FRAMES_EXPTIME = '5s'
-FOLDER = '../wasp52b/' #Where the observation is placed
+FOLDER = './wasp52b/' #Where the observation is placed
 IMAGENAME_FLAG = 'TRE' #How we will identify images on a folder
 FDO_FLAG = 'CDO' #Flat Dark frames identifier
 FFF_FLAG = 'FFF' #Flat Frames identifier
@@ -55,7 +63,7 @@ allFiles = os.listdir(FOLDER) #All docs names in the folder
 images = list(filter(lambda x: IMAGENAME_FLAG in x, allFiles)) #List of the images
 fdf = list(filter(lambda x: FDO_FLAG in x and FLAT_FRAMES_EXPTIME in x, allFiles)) #List of flat dark frames
 ff = list(filter(lambda x: FFF_FLAG in x, allFiles)) #List of flat frames
-df = list(filter(lambda x: DF_FLAG in x, allFiles)) #List of dark frames
+df = list(filter(lambda x: DF_FLAG in x and not FLAT_FRAMES_EXPTIME in x, allFiles)) #List of dark frames
 
 print(" ---- Data Summary -----")
 print("We have identified {} files as {}".format(len(images), 'images'))
@@ -76,7 +84,25 @@ df = [fits.open(image)[0].data for image in df] #Dark frames són les imatges ap
 #### Test zone ####
 imshow(images[10], lut = 'Sí, si us plau') #Amb laLUT passada per que es vegi guai l'imatge
 imshow(fdf[10])
-imshow(ff[10])
-imshow(df[10])
+imshow(ff[10], lut = True)
+imshow(df[10], lut = True)
 
 #TODO: Neteja del senyal
+# NETEJAR DF
+nframes = 30
+meanIm = sum(df[:nframes])/nframes
+# Convert to range 0-255
+meanIm = (meanIm - meanIm.min())
+meanIm = 255 * meanIm/meanIm.max()
+# Double threshold to get dark and bright peaks
+light =  (40 > meanIm) + (meanIm > 210)
+# Remove noise
+res = images[10] - meanIm * light
+imshow(res.astype(int), lut = True)
+imshow(images[10] != res)
+
+
+
+
+
+
