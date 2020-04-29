@@ -13,6 +13,7 @@ from PIL import Image as pil
 
 #### Data sctructure and numerical support #####
 import numpy as np
+from scipy import signal as ss
 
 #### OS Support ####
 import os
@@ -29,7 +30,8 @@ FDO_FLAG = 'CDO' #Flat Dark frames identifier
 FFF_FLAG = 'FFF' #Flat Frames identifier
 DF_FLAG = 'CDO' #Dark Frames identifier
 
-def imshow(im, c = 'gray', lut = False):
+def imshow(im, c = 'gray', lut = False, index = 0):
+    plt.figure(index)
     if lut:
         histim = loadHist(im)
         cumhist = cumHist(histim)
@@ -82,27 +84,68 @@ ff = [fits.open(image)[0].data for image in ff] #Flat frames son frames totalmen
 df = [fits.open(image)[0].data for image in df] #Dark frames són les imatges apuntant a la foscar (trobar el soroll de fons)
 
 #### Test zone ####
+"""
 imshow(images[10], lut = 'Sí, si us plau') #Amb laLUT passada per que es vegi guai l'imatge
 imshow(fdf[10])
 imshow(ff[10], lut = True)
 imshow(df[10], lut = True)
+"""
 
 #TODO: Neteja del senyal
 # NETEJAR DF
-nframes = 30
-meanIm = sum(df[:nframes])/nframes
-# Convert to range 0-255
-meanIm = (meanIm - meanIm.min())
-meanIm = 255 * meanIm/meanIm.max()
-# Double threshold to get dark and bright peaks
-light =  (40 > meanIm) + (meanIm > 210)
-# Remove noise
-res = images[10] - meanIm * light
-imshow(res.astype(int), lut = True)
-imshow(images[10] != res)
+def cleanDF(images, DF):
+    nframes = len(DF)
+    meanIm = sum(DF)/nframes
+    # Convert to range 0-255
+    meanIm = (meanIm - meanIm.min())
+    meanIm = 255 * meanIm/meanIm.max()
+    # Double threshold to get dark and bright peaks
+    light =  (40 > meanIm) + (meanIm > 210) #TODO: mirar valors
+    # Remove noise
+    cleanImages = [images[i] - meanIm * light for i in range(len(images))]
+    #imshow(res.astype(int), lut = True)
+    #imshow(images[10] != res)
+    return cleanImages
 
+def cleanImages(images, df, ff, fdf):
+    newImages = cleanDF(images, df)
+    #images = cleanFF(images, ff, fdf)
+    return newImages
 
+""" Intento fallido
+def cleanFDF(images, FDF):
+    nframes = len(FDF)
+    meanIm = sum(FDF)/nframes
+    # Convert to range 0-255
+    meanIm = (meanIm - meanIm.min())
+    meanIm = 255 * meanIm/meanIm.max()
+    # Double threshold to get dark and bright peaks
+    light =  (40 > meanIm) + (meanIm > 210) #TODO: mirar valors
+    # Remove noise
+    cleanImages = [images[i] - meanIm * light for i in range(len(images))]
+#    imshow(cleanImages[10].astype(int), lut = True, index = 0)
+#    imshow(images[10] != cleanImages[10], index = 2)
+    return cleanImages
 
+#Netejem FF amb FDF
 
-
+def cleanFF(images, FF, FDF):
+    newFF = cleanFDF(FF, FDF)
+    nframes = len(newFF)
+    meanIm = sum(newFF)/nframes
+    # Convert to range 0-255
+    meanIm = (meanIm - meanIm.min())
+    meanIm = 255 * meanIm/meanIm.max()
+    # Double threshold to get dark and bright peaks
+    light =  (meanIm > 100) * (meanIm < 100) #TODO: mirar valors
+    # Remove noise
+    cleanImages = [images[i] - meanIm * light for i in range(len(images))]
+    #imshow(cleanImages[0].astype(int), lut = True, index = 0)
+    #imshow(images[0].astype(int), lut = True, index = 1)
+    return cleanImages
+    
+    
+cleanImages = cleanFF(newImages, ff, fdf)
+imshow(cleanImages[0].astype(int), lut = True)
+"""
 
