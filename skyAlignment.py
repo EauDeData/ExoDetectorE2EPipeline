@@ -16,7 +16,7 @@ import os
 imagesOriginals = skyCleaner.images
 images = skyCleaner.cleanImages(skyCleaner.images, skyCleaner.df, skyCleaner.ff, skyCleaner.fdf)
 
-def cross_correlation_fourier(images): #EXTRA 1
+def cross_correlation_fourier(images):
     # The register_translation function uses cross-correlation in Fourier space
     referenceImage = images[0]
     newImages = [referenceImage]
@@ -26,8 +26,6 @@ def cross_correlation_fourier(images): #EXTRA 1
         newImages.append(tmp)
     return newImages
 
-alignedImages = cross_correlation_fourier(images)
-
 def create_video(video, filename):
     print("Creating video...")
     x, y = video[0].shape
@@ -35,8 +33,9 @@ def create_video(video, filename):
     out = cv2.VideoWriter(local_path + "/{}.avi".format(filename), cv2.VideoWriter_fourcc(*'DIVX'), 20, (y, x), False)        
     for i in range(len(video)):
         tmp = video[i]
-        tmp = tmp - np.min(tmp)
-        tmp = 255 * (tmp / np.max(tmp))
+        tmp = skyCleaner.normalize(tmp)
         out.write(tmp.astype(np.uint8))
     out.release()
     return np.array(video)
+
+

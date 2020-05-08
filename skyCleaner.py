@@ -10,6 +10,8 @@ Created on Tue Apr 21 19:14:52 2020
 import cv2
 import matplotlib.pyplot as plt
 from PIL import Image as pil
+import seaborn as sns
+
 
 #### Data sctructure and numerical support #####
 import numpy as np
@@ -30,8 +32,16 @@ FDO_FLAG = 'CDO' #Flat Dark frames identifier
 FFF_FLAG = 'FFF' #Flat Frames identifier
 DF_FLAG = 'CDO' #Dark Frames identifier
 
-def imshow(im, c = 'gray', lut = False, index = 0):
+def normalize(image, bits = 8):
+    tmp = image - image.min()
+    tmp = tmp / tmp.max()
+    tmp = tmp * ((2 ** bits) - 1)
+    return tmp.astype(np.uint8)    
+
+def imshow(im, c = 'gray', lut = False, log = False, index = 0, scatter = None):
     plt.figure(index)
+    if scatter:
+        plt.scatter(scatter[0], scatter[1])
     if lut:
         histim = loadHist(im)
         cumhist = cumHist(histim)
@@ -39,8 +49,13 @@ def imshow(im, c = 'gray', lut = False, index = 0):
         plt.imshow(im_luted, cmap = c)
         plt.show()
         return True
-    plt.imshow(im, cmap = c)
-    plt.show()
+    if log:
+        plt.imshow(np.log(im + 1), cmap = c)
+        plt.show()
+    else:
+        plt.imshow(im, cmap = c)
+        plt.show()
+    
 
 def loadHist(im):
     maxim = im.max()
@@ -58,6 +73,40 @@ def cumHist(hist):
     for i in range(1, len(cummies)):
         cummies[i] = cummies[i-1] + hist[i]
     return cummies
+
+def histogram(raw_image, bins = 800, hist = True, kde = True): #hist: normed hist; kde = gaussian kernel density estimate
+    # Plot a histogram of the distribution of the pixels
+    sns.distplot(raw_image.ravel(), bins = bins, hist = hist,
+                 label=f'Pixel Mean {np.mean(raw_image):.4f} & Standard Deviation {np.std(raw_image):.4f}', kde = kde)
+    plt.legend(loc='upper center')
+    plt.title('Distribution of Pixel Intensities in the Image')
+    plt.xlabel('Pixel Intensity')
+    plt.ylabel('# Pixels in Image')
+               
+def random_imshow(images):
+    idx = np.random.randint(len(images), size=9)
+    print("Idx:", idx)
+    random_images = [images[x] for x in idx]
+    plt.figure(figsize=(20,10))
+    for i in range(9):
+        plt.subplot(3, 3, i + 1)
+        plt.imshow(random_images[i], cmap='gray')
+        plt.axis('off')
+        
+def generate_gif(images, filename):
+    import imageio
+    frames = []
+    for im in images:
+        frames.append(normalize(im))
+    imageio.mimsave('./' + str(filename) + '.gif', frames, duration=0.01)
+    
+def time_serie_plot(data, indx=0):
+    plt.figure(indx)
+    n_data = len(data)
+    x = np.arange(n_data)
+    y = data
+    plt.plot(x, y)
+
 
 ##### Image batching ####
 
