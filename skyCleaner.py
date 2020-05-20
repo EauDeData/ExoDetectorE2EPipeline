@@ -5,7 +5,9 @@ Created on Tue Apr 21 19:14:52 2020
 
 @author: gerard
 """
-
+""" NOTES
+- A prtir de la 100 inclosa estan netes, abans brutes jasjas
+"""
 #### Image processing ####
 import cv2
 import matplotlib.pyplot as plt
@@ -26,8 +28,8 @@ from astropy.io import fits
 #### Data Flags for classification and usage #####
 
 FLAT_FRAMES_EXPTIME = '5s'
-FOLDER = './wasp52b/' #Where the observation is placed
-IMAGENAME_FLAG = 'TRE' #How we will identify images on a folder
+FOLDER = './cleanObservations/' #Where the observation is placed (wasp52b) (cleanObservations)
+IMAGENAME_FLAG = '' #'TRE' #How we will identify images on a folder ('')
 FDO_FLAG = 'CDO' #Flat Dark frames identifier
 FFF_FLAG = 'FFF' #Flat Frames identifier
 DF_FLAG = 'CDO' #Dark Frames identifier
@@ -90,7 +92,23 @@ def random_imshow(images):
     plt.figure(figsize=(20,10))
     for i in range(9):
         plt.subplot(3, 3, i + 1)
-        plt.imshow(random_images[i], cmap='gray')
+        histim = loadHist(random_images[i])
+        cumhist = cumHist(histim)
+        im_luted = cumhist[random_images[i]]
+        plt.imshow(im_luted, cmap='gray')
+        plt.axis('off')
+        
+def n_imshow(images, idx, n):
+    print("Idx", idx, "to", n+idx)
+    random_images = [images[x] for x in range(idx,n+idx,1)]
+    plt.figure(figsize=(20,10))
+    for i in range(n):
+        plt.subplot((n//4)+1, 4, i + 1)
+        histim = loadHist(random_images[i])
+        cumhist = cumHist(histim)
+        im_luted = cumhist[random_images[i]]
+        plt.title(i+idx)
+        plt.imshow(im_luted, cmap='gray')
         plt.axis('off')
         
 def generate_gif(images, filename):
@@ -104,14 +122,33 @@ def time_serie_plot(data, indx=0):
     plt.figure(indx)
     n_data = len(data)
     x = np.arange(n_data)
-    y = data
-    plt.plot(x, y)
+    plt.plot(x, data)
+    
+def imshow_all(images):
+    img = None
+    images = np.array(images).astype(int)
+    p = 0
+    for n in range(len(images)):
+        im = images[n]
+        print("Matrix")
+        print(im)
+        print("Mean:", np.mean(im))
+        print("----")
+        plt.title(p)
+        if img is None:
+            img = plt.imshow(im, cmap="gray")
+        else:
+            img.set_data(im)
+        plt.draw()
+        plt.pause(1)
+        p+=1
 
 
 ##### Image batching ####
 
 allFiles = os.listdir(FOLDER) #All docs names in the folder
 images = list(filter(lambda x: IMAGENAME_FLAG in x, allFiles)) #List of the images
+images.sort() #Ordenem
 fdf = list(filter(lambda x: FDO_FLAG in x and FLAT_FRAMES_EXPTIME in x, allFiles)) #List of flat dark frames
 ff = list(filter(lambda x: FFF_FLAG in x, allFiles)) #List of flat frames
 df = list(filter(lambda x: DF_FLAG in x and not FLAT_FRAMES_EXPTIME in x, allFiles)) #List of dark frames

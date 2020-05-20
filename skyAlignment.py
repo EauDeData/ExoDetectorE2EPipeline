@@ -13,8 +13,9 @@ from skimage.feature import register_translation
 import cv2
 import os
 
+#imagesOriginals = skyCleaner.images
+#images = skyCleaner.cleanImages(skyCleaner.images, skyCleaner.df, skyCleaner.ff, skyCleaner.fdf)
 imagesOriginals = skyCleaner.images
-images = skyCleaner.cleanImages(skyCleaner.images, skyCleaner.df, skyCleaner.ff, skyCleaner.fdf)
 
 def cross_correlation_fourier(images):
     # The register_translation function uses cross-correlation in Fourier space

@@ -11,8 +11,8 @@ import skyCleaner, skyAlignment
 import cv2
 import numpy as np
 
-images = skyAlignment.images
-alignedImages = skyAlignment.cross_correlation_fourier(images[:])
+imagesOriginals = skyAlignment.imagesOriginals
+alignedImages = skyAlignment.cross_correlation_fourier(imagesOriginals)
 
 def getStarCoords(image):
     t = 5200
@@ -21,6 +21,7 @@ def getStarCoords(image):
     star_coords = []
     star_coords_x = []
     star_coords_y = []
+    print(image.shape)
     for star in contours:
         star = star.reshape((-1,2))
         mean_x = np.round(np.mean(star[:,0]))
