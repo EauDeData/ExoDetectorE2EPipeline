@@ -15,9 +15,10 @@ import os
 
 #imagesOriginals = skyCleaner.images
 #images = skyCleaner.cleanImages(skyCleaner.images, skyCleaner.df, skyCleaner.ff, skyCleaner.fdf)
-imagesOriginals = skyCleaner.images
+#imagesOriginals = skyCleaner.images
 
 def cross_correlation_fourier(images):
+    print("Aligning images...")
     # The register_translation function uses cross-correlation in Fourier space
     referenceImage = images[0]
     newImages = [referenceImage]
@@ -25,6 +26,7 @@ def cross_correlation_fourier(images):
         shift, error, diffphase = register_translation(referenceImage, images[i], 100)
         tmp = ndim.shift(images[i], shift)
         newImages.append(tmp)
+    print("Done!")
     return newImages
 
 def create_video(video, filename):

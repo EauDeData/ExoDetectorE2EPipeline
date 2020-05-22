@@ -28,8 +28,8 @@ from astropy.io import fits
 #### Data Flags for classification and usage #####
 
 FLAT_FRAMES_EXPTIME = '5s'
-FOLDER = './cleanObservations/' #Where the observation is placed (wasp52b) (cleanObservations)
-IMAGENAME_FLAG = '' #'TRE' #How we will identify images on a folder ('')
+FOLDER = './wasp52b/' #Where the observation is placed (wasp52b) (cleanObservations)
+IMAGENAME_FLAG = 'TRE' #'TRE' #How we will identify images on a folder ('')
 FDO_FLAG = 'CDO' #Flat Dark frames identifier
 FFF_FLAG = 'FFF' #Flat Frames identifier
 DF_FLAG = 'CDO' #Dark Frames identifier
@@ -143,8 +143,28 @@ def imshow_all(images):
         plt.pause(1)
         p+=1
 
-
 ##### Image batching ####
+        
+def loadImages(fileObs, fileDF, fileFF, fileFDF):
+    print("Loading images...")
+    obs = os.listdir(fileObs)
+    obs.sort()
+    df = os.listdir(fileDF)
+    df.sort()
+    ff = os.listdir(fileFF)
+    ff.sort()
+    fdf = os.listdir(fileFDF)
+    fdf.sort()
+    obs = [FOLDER + name for name in obs]
+    fdf = [FOLDER + name for name in fdf]
+    ff = [FOLDER + name for name in ff]
+    df = [FOLDER + name for name in df]
+    images = [fits.open(image)[0].data for image in obs] #les imatges
+    fdf = [fits.open(image)[0].data for image in fdf] #Flat dark frames son els dark frams de l'exposició dels flat frames
+    ff = [fits.open(image)[0].data for image in ff] #Flat frames son frames totalment iluminats per trobar pixels morts (trobarem pols a la ccd)
+    df = [fits.open(image)[0].data for image in df]
+    print("Done!")
+    return images, fdf, ff, df
 
 allFiles = os.listdir(FOLDER) #All docs names in the folder
 images = list(filter(lambda x: IMAGENAME_FLAG in x, allFiles)) #List of the images
@@ -170,12 +190,8 @@ ff = [fits.open(image)[0].data for image in ff] #Flat frames son frames totalmen
 df = [fits.open(image)[0].data for image in df] #Dark frames són les imatges apuntant a la foscar (trobar el soroll de fons)
 
 #### Test zone ####
-"""
-imshow(images[10], lut = 'Sí, si us plau') #Amb laLUT passada per que es vegi guai l'imatge
-imshow(fdf[10])
-imshow(ff[10], lut = True)
-imshow(df[10], lut = True)
-"""
+
+###
 
 #TODO: Neteja del senyal
 # NETEJAR DF
@@ -189,8 +205,6 @@ def cleanDF(images, DF):
     light =  (40 > meanIm) + (meanIm > 210) #TODO: mirar valors
     # Remove noise
     cleanImages = [images[i] - meanIm * light for i in range(len(images))]
-    #imshow(res.astype(int), lut = True)
-    #imshow(images[10] != res)
     return cleanImages
 
 def cleanImages(images, df, ff, fdf):

@@ -6,21 +6,17 @@ Created on Fri May  8 18:15:31 2020
 @author: gerard
 """
 
-import skyTracker, skyCleaner
+import skyTracker
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal as ss
 
-images = skyTracker.alignedImages
-starCoords = skyTracker.starCoords 
+#images = skyTracker.alignedImages
+#starCoords = skyTracker.starCoords 
 
-""" NOTES
-· Estamos clean bb
-"""
 
 def getBrians(images, starCoords): #Corba de llum
     ohHiBrian = []
-    indx = 0
     tmp = np.array(images)
     n = 10
     for star in starCoords:
@@ -34,17 +30,21 @@ def getBrians(images, starCoords): #Corba de llum
         #skyCleaner.imshow_all(maskFrame[:5])
         for i in range(len(maskFrame)):
             star_value.append(np.mean(maskFrame[i]))
-                
-        res = []
-        for i in range(1,len(star_value)-1):
-            mean = np.mean(star_value[i-1:i+1])
-            res.append(mean)
-        
-        #skyTracker.skyCleaner.time_serie_plot(res, indx)
-        indx += 1
-        ohHiBrian.append(res)
+        ohHiBrian.append(star_value)
         
     return ohHiBrian
+
+def getBetterBrians(lightCurve): #Corba de llum mitjana veins
+    ohHiBrian = []
+    for light in lightCurve:
+        res = []
+        for i in range(1,len(light)-1):
+            mean = np.mean(light[i-1:i+1])
+            res.append(mean)
+        #skyTracker.skyCleaner.time_serie_plot(res, indx)
+        ohHiBrian.append(res)
+    return ohHiBrian
+    
 
 def getAdris(myLovelyBrians): #Corba de llum - corba mitjana
     adriCurves = np.array(myLovelyBrians)
@@ -59,9 +59,17 @@ def derivAdris(adriRes): #Derivada de la corba de llum
         plt.plot(deriv)
     plt.show()
 
-myLovelyBrians = getBrians(images, starCoords)
-myAdrians = getAdris(myLovelyBrians)
-derivAdris(myAdrians)
+def getCurves(images, starCoords):
+    myLovelyBrians = getBrians(images, starCoords)
+    myBetterBrians = getBetterBrians(myLovelyBrians)
+    myAdrians = getAdris(myBetterBrians)
+    idx = 86
+    plt.figure(1), plt.plot(myLovelyBrians[idx]), plt.plot(myBetterBrians[idx]), plt.plot(myAdrians[idx])
+    plt.figure(2), plt.scatter(np.arange(len(myLovelyBrians[idx])), myLovelyBrians[idx]),
+    plt.scatter(np.arange(len(myBetterBrians[idx])), myBetterBrians[idx]), 
+    plt.scatter(np.arange(len(myAdrians[idx])), myAdrians[idx])
+
+#derivAdris(myAdrians)
 
 # Visualization mask
 #numpyIm = np.array(images)
@@ -69,6 +77,6 @@ derivAdris(myAdrians)
 #tmp = numpyIm[:, y-5:y+5, x-5:x+5]
 #skyCleaner.imshow_all(tmp[:10])
 
-#plt.plot(myLovelyBrians[86]); plt.plot(outBrians(myLovelyBrians[86], 0.5)), plt.plot(adriRes[86])
+#plt.plot(myLovelyBrians[86]); plt.plot(myBetterBrians(myLovelyBrians[86], 0.5)), plt.plot(adriRes[86])
 
 
