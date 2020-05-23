@@ -40,12 +40,11 @@ def genesis():
 def epoches(num, image, ff, fdf):
     poblation = genesis()
     loss = ['inf']*len(poblation)
+    print("Genetically cleaning images...")
     for i in range(num):
         for ng, gene in enumerate(poblation):
             loss[ng] =  evalue(image, ff, fdf, gene[0], gene[1], gene[2], gene[3])
         bests = sorted(poblation, key = lambda x: loss[poblation.index(x)])
         poblation = bests[:len(poblation)//2] + get_poblation(bests[:len(poblation)//2])
-        print('EPOCH '+str(i)+' - Current best:', end=' ')
-        for i in bests[0]:
-            print(i, end = ' ')
+    print("Done!")
     return bests

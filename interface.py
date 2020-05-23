@@ -78,10 +78,10 @@ class CreationMenu:
         return None
     
     def load_button(self):
-        obs = str(self._input_observation.get())
-        df = str(self._input_df.get())
-        ff = str(self._input_ff.get())
-        fdf = str(self._input_fdf.get())
+        obs = str(self._input_observation.get()) if str(self._input_observation.get())[-1] == '/' else str(self._input_observation.get())+'/'
+        df = str(self._input_df.get()) if str(self._input_df.get())[-1] == '/' else str(self._input_df.get())+'/'
+        ff = str(self._input_ff.get()) if str(self._input_ff.get())[-1] == '/' else str(self._input_ff.get())+'/'
+        fdf = str(self._input_fdf.get()) if str(self._input_fdf.get())[-1] == '/' else str(self._input_fdf.get())+'/'
 
         self.images, df, ff, fdf = skyCleaner.loadImages(obs, df, ff, fdf)
         cleanImages = skyCleaner.cleanImages(self.images, df, ff, fdf)
