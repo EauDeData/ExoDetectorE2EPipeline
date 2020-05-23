@@ -84,7 +84,7 @@ class CreationMenu:
         fdf = str(self._input_fdf.get()) if str(self._input_fdf.get())[-1] == '/' else str(self._input_fdf.get())+'/'
 
         self.images, df, ff, fdf = skyCleaner.loadImages(obs, df, ff, fdf)
-        cleanImages = skyCleaner.cleanImages(self.images, df, ff, fdf)
+        #cleanImages = skyCleaner.cleanImages(self.images, df, ff, fdf)
         cleanImages = self.images
         self.alignedImages = skyAlignment.cross_correlation_fourier(cleanImages)
         self.starCoords , self.viewCoords = skyTracker.getStarCoords(self.images[0])

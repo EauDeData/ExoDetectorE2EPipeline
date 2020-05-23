@@ -16,8 +16,8 @@ def signaltonoise(a, axis=0, ddof=0):
     sd = a.std(axis=axis, ddof=ddof)
     return np.where(sd == 0, 0, m/sd)
 
-def evalue(image, ff, fdf, a, b, a2, b2, epsilon = 0.00000001):
-    res = (ff / (fdf * abs(a2) + b2 + epsilon)) * abs(a) + b
+def evalue(image, ff, fdf, a, a2, epsilon = 0.00000001):
+    res = (ff / (fdf * abs(a2) + epsilon)) * abs(a)
     clean = image / (res + epsilon)
     return signaltonoise(clean.flatten())
 
@@ -31,7 +31,7 @@ def get_poblation(previous_bests):
     return new_poblation
 
 def genesis():
-    eva = [[1, 1, 1, 1]]
+    eva = [[1, 1]]
     for i in range(5):
         for new in get_poblation(eva):
             eva.append(new)
@@ -40,11 +40,9 @@ def genesis():
 def epoches(num, image, ff, fdf):
     poblation = genesis()
     loss = ['inf']*len(poblation)
-    print("Genetically cleaning images...")
     for i in range(num):
         for ng, gene in enumerate(poblation):
-            loss[ng] =  evalue(image, ff, fdf, gene[0], gene[1], gene[2], gene[3])
+            loss[ng] =  evalue(image, ff, fdf, gene[0], gene[1])
         bests = sorted(poblation, key = lambda x: loss[poblation.index(x)])
         poblation = bests[:len(poblation)//2] + get_poblation(bests[:len(poblation)//2])
-    print("Done!")
     return bests
