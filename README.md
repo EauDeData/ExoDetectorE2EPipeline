@@ -6,7 +6,7 @@ Així la pipeline es defineix en diverses parts.
   1. Neteja de les imatges (lab1 de PSIV). 🙁
   2. Star Tracking, seguiment i aligment de les estrelles al llarg de l'observació (lab2 de PSIV).🤩
   3. Obtenció de la corva de llum de cada regió detectada com estel. 🤩
-  4. Detecció de la corva més semblant a les corves provocades per trànsits. 🙁
+  4. Detecció de la corva més semblant a les corves provocades per trànsits. 🤩
   5. Interfície gràfica? 🤩
  
  Att-. Dades.
