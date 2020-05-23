@@ -13,7 +13,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import tkinter as Tk
 import matplotlib.pyplot as plt
-import numpy as np
 
 class Plot:
     def __init__(self, curveList, starList):
@@ -29,8 +28,6 @@ class Plot:
         n = len(curveList)
         starList = [str(x) for x in starList]
         for i in range(n):
-            if i > 0:
-                curveList[i] = np.array(curveList[0]) / np.array(curveList[i])
             c = next(colors)["color"]
             plotfig = fig.add_subplot((n//2)+1, 2, i + 1)
             plotfig.plot(curveList[i],label=starList[i],color=c)
