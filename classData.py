@@ -1,22 +1,20 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May 22 23:12:41 2020
+
+@author: gerard
+"""
+
 import numpy as np 
 import pickle as pk
-import random
 import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
-
-class ParserDeMerda:
-    def __init__(self, pickle):
-        self.curves = pk.load(open(pickle, 'rb'))
-        self.torchify = False
-    def __len__(self):
-        return len(self.curves)
-    def __getitem__(self, index):
-        if self.torchify:
-            return torch.tensor(self.curves[index])
-        return self.curves[index]
+from sklearn.model_selection import train_test_split
 
 class Parser:
+    
     def __init__(self, csvFilename, csvMetadataFilename):
         file1 = pd.read_csv(csvFilename)
         estrelles = set(file1['object_id'])
@@ -33,6 +31,7 @@ class Parser:
         print(self.numClases)
         self.lut = {x: num for num, x in enumerate(set(self.categories.values()))}
         self.maximum = max([max(x) for x in self.corves.values()])
+        self.invlut = {v:k for k, v in obj.lut.items()}
         del file1, corves, array, file2
 
     def __len__(self):
@@ -52,99 +51,77 @@ class Parser:
         x = x.reshape((1, 1, -1))
 
         return x, y
-try:
-    obj = pk.load(open('datasetRick.p', 'rb'))
-except:
-    obj = Parser('training_set.csv', 'training_set_metadata.csv')
-    pk.dump(obj, open('datasetRick.p', 'wb'))
 
-#### Model Definition ####
-#Best: primer DO = 0.35, Segon DO = 0.3. Primera Conv: 7KS
-model = tf.keras.models.Sequential([
-    #tf.keras.layers.Embedding(int(obj.maximum + 1), 128),
-    tf.keras.layers.Conv1D(32, 7, activation = 'relu', padding = 'same'),\
-    tf.keras.layers.MaxPooling1D(5, padding = 'same'), \
-    tf.keras.layers.Conv1D(32, 7, activation = 'relu', padding = 'same'), \
-    tf.keras.layers.GlobalMaxPooling1D(),\
-    tf.keras.layers.Dense(128, activation = 'relu'),\
-    tf.keras.layers.Dense(56, activation = 'relu'),\
-    tf.keras.layers.Dense(26, activation = 'relu'),\
-    tf.keras.layers.Dropout(0.2),\
-    tf.keras.layers.Dense(obj.numClases, activation = 'softmax') # tf.keras.layers.Dense(int(obj.numClases * 1.2), activation = 'relu'), \
-])
+def create_model(obj):
+    max_features = 4000000
+    max_len = 352
+    
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Embedding(max_features, obj.numClases, input_length=max_len))
+    model.add(tf.keras.layers.Conv1D(32, 7, activation='relu'))
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.MaxPool1D(5))
+    model.add(tf.keras.layers.Conv1D(64, 7, activation='relu'))
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.GlobalMaxPool1D())
+    model.add(tf.keras.layers.Dense(128, activation = 'relu'))
+    model.add(tf.keras.layers.Dense(56, activation = 'relu'))
+    model.add(tf.keras.layers.Dense(32, activation = 'relu'))
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.Dense(obj.numClases, activation='softmax'))
+    
+    model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=1e-4),
+                  loss='binary_crossentropy',
+                  metrics=['acc']
+    )
+    
+    #model.summary()
+    return model
 
-
-
-LR = 0.001
-
-lr_schedule = tf.keras.optimizers.schedules.InverseTimeDecay(
-  LR,
-  decay_steps=int(len(obj)*0.80),
-  decay_rate=1,
-  staircase=False)
-
-lossF = tf.losses.BinaryCrossentropy()
-optimizer = tf.keras.optimizers.Adam(lr_schedule)
-
-@tf.function
-def trainStep(x, y, lossFunction, model, optimizer):
-    with tf.GradientTape() as tape:
-        tape.watch(x)
-        prediction = model(x)
-        loss = lossFunction(y, prediction)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-    acc = 0
-    if tf.math.equal(tf.math.argmax(prediction[0]), tf.math.argmax(y[0])):
-        acc = 1
-
-    return loss , acc 
-
-def test_step(x, y, lossFunction, model):
-
-    prediction = model(x)
-    if tf.math.equal(tf.math.argmax(prediction[0]), tf.math.argmax(y[0])):
-        return 1, lossFunction(y, prediction)
-    return 0, lossFunction(y, prediction)
-
-
-def main(model, data, epoches, optimizer, lossF):
-    global LR
-    printPeriod = 500
-    lossTrain = []
-    lossTest = []
-    lossTrainIWillPlot = []
-    startTest = int(len(data) * 0.80) #canvi 95% ---> 80%
-    for i in range(epoches):
-        prec = 0
-        precTrain = 0
-        for x in range(len(data)):
-            inp, out = data[x]
-            if x < startTest:
-                loss, accuracy = trainStep(inp, out, lossF, model, optimizer)
-                lossTrain.append(loss)
-                precTrain += accuracy
-            else:
-                acc, loss = test_step(inp, out, lossF, model)
-                prec += acc
-                lossTest.append(loss)
-            if x%printPeriod == 0:
-                model.save_weights('./weights/')
-                if x < startTest:
-                    lossTrainIWillPlot.append(sum(lossTrain)/len(lossTrain))
-                    print("Entrenant... sample numero {} amb loss {} i accuracy {}".format(x, sum(lossTrain)/len(lossTrain), precTrain/(x + 1)))
-                    plt.plot(lossTrainIWillPlot)
-                    plt.savefig('train.png')
-                    plt.clf()
-                    lossTrain = []
-                else:
-                    print("Testant... sample numero {} amb accuracy {} i loss {}".format(x, prec/(x - startTest + 1), lossTest[-1]))
-                    plt.plot(lossTest)
-                    plt.savefig('test.png')
-                    plt.clf()
-                
-
+def train_model(obj):
+   
+    x = []
+    y = []
+    for i in range(len(obj)):
+        x.append(obj[i][0][0][0])
+        y.append(obj[i][1][0])
+    
+    x = np.array(x) - np.min(x) # Important fer-ho amb dades noves
         
-main(model, obj, 50, optimizer, lossF)
-cat = list(obj.categories.values())
-print(dict([(categoria, round(cat.count(categoria)/len(cat) * 100, 5)) for categoria in set(obj.categories.values())]))
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
+    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
+    
+    X_train = tf.keras.preprocessing.sequence.pad_sequences(X_train)
+    y_train = tf.keras.preprocessing.sequence.pad_sequences(y_train)
+    
+    X_test = tf.keras.preprocessing.sequence.pad_sequences(X_test)
+    y_test = tf.keras.preprocessing.sequence.pad_sequences(y_test)
+    
+    X_validation = tf.keras.preprocessing.sequence.pad_sequences(X_validation)
+    y_validation = tf.keras.preprocessing.sequence.pad_sequences(y_validation)
+
+    def scheduler(epoch):
+      if epoch < 10:
+        return 0.001
+      else:
+        return 0.001 * tf.math.exp(0.1 * (10 - epoch))
+    
+    callback = [tf.keras.callbacks.LearningRateScheduler(scheduler),
+                tf.keras.callbacks.EarlyStopping(patience=5),
+                tf.keras.callbacks.ModelCheckpoint(filepath='model.{epoch:02d}-{val_acc:.4f}.h5', verbose=1)
+    ]
+    
+    model = create_model()
+    
+    model.fit(X_train, y_train, epochs=30, batch_size=128, callbacks=[callback], validation_data=(X_validation, y_validation))
+    
+    print('\n# Evaluate on test data')
+    results = model.evaluate(X_test, y_test, batch_size=128)
+    print('test loss, test acc:', results)
+    
+def get_obj():
+    return pk.load(open('datasetRick.p', 'rb'))
+
+
+
+

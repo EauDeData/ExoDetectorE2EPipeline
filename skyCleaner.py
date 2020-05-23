@@ -28,8 +28,8 @@ from astropy.io import fits
 #### Data Flags for classification and usage #####
 
 FLAT_FRAMES_EXPTIME = '5s'
-FOLDER = './wasp52b/' #Where the observation is placed (wasp52b) (cleanObservations)
-IMAGENAME_FLAG = 'TRE' #'TRE' #How we will identify images on a folder ('')
+FOLDER = './cleanObservations/' #Where the observation is placed (wasp52b) (cleanObservations)
+IMAGENAME_FLAG = '' #'TRE' #How we will identify images on a folder ('')
 FDO_FLAG = 'CDO' #Flat Dark frames identifier
 FFF_FLAG = 'FFF' #Flat Frames identifier
 DF_FLAG = 'CDO' #Dark Frames identifier

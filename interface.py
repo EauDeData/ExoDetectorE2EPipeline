@@ -8,10 +8,14 @@ Created on Thu May 21 16:16:52 2020
 
 
 import tkinter as Tk
-import skyCleaner, skyAlignment, skyTracker, skyBrian
+import skyCleaner, skyAlignment, skyTracker, skyBrian, classData
+from classData import Parser
 from PltInterface import Plot
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
+import pickle as pk
+ 
 
 class CreationMenu:
     def __init__(self):
@@ -52,9 +56,9 @@ class CreationMenu:
         self._calculate_lc.pack()
         self._calculate_lc.place(x=260, y=175)
         
-        self._detect_exo = Tk.Button(self.master, command = self.detect_button, text = "Detect exoplanet", bg = 'Orchid3')
+        self._detect_exo = Tk.Button(self.master, command = self.detect_button, text = "Classify star", bg = 'Orchid3')
         self._detect_exo.pack()
-        self._detect_exo.place(x=285, y=215)
+        self._detect_exo.place(x=295, y=215)
 
         self._canvas = Tk.Canvas(self.master, height=100, width=600, bg="snow", highlightbackground="gainsboro")
         self.set_canvas_text()
@@ -103,7 +107,6 @@ class CreationMenu:
         plt.show()
         plt.close(1)
         coords = np.array(coords)
-        #coords[:,[0, 1]] = coords[:,[1, 0]]
         starCoords = np.array(self.starCoords)
         selectedCurves = []
         selectedStars = []
@@ -119,21 +122,57 @@ class CreationMenu:
             
     def detect_button(self):
         #Detectara la possible estrella amb un exoplaneta
-
-        """
-        exo = CEP.Exo_nou()
-        plotter = GG.Plotter(ETS.Get_exo_list())
-        try:
-            exo.set_values(float(self._input_mass.get()), float(self._input_radius.get()), float(self._input_temperature.get()))
-            mediocrity = exo.get_mediocrity()
-            esi = exo.getESI()
-
-            self.set_canvas_text(str("L'exoplaneta creat té una mediocritat del " + str(mediocrity) + '%') +
-                                 str("\nEl mateix té una semblança a la tera del " + str(esi) + '%')+
-            '\nA més, segons el model KMeans, aquest pertany a la clase etiquetada com '+str(plotter.K_Means(exo)))
-        except ValueError:
-            self.set_canvas_text(text="S'han d'introduïr dades vàlides")
-        """
+        images = self.alignedImages
+        betterLightCurve = self.lightCurves
+        plt.title("Select the stars you want classify:")
+        plt.figure(1,figsize=(10,10))
+        #plt.scatter(self.viewCoords[0], self.viewCoords[1], s=80, facecolors='none', edgecolors='r')
+        plt.imshow(images[0], cmap="gray")
+        coords = plt.ginput(-1)
+        plt.show()
+        plt.close(1)
+        coords = np.array(coords)
+        starCoords = np.array(self.starCoords)
+        selectedCurves = []
+        selectedStars = []
+        for star in coords:
+            dist = np.sqrt(np.sum(np.power((starCoords - star), 2),1))
+            idx = np.argmin(dist)
+            selectedCurves.append(betterLightCurve[idx])
+            selectedStars.append(starCoords[idx])
+        
+        #tf.autograph.set_verbosity(10)
+        obj = classData.get_obj()
+        model = classData.create_model(obj)
+        model.load_weights('model.h5')
+        idxToClass = {0: 64, 1: 65, 2: 67, 3: 6, 4: 42, 5: 15, 6: 16, 7: 52, 
+         8: 53, 9: 88, 10: 90, 11: 92, 12: 62, 13: 95}
+        
+        tmp = []
+        for sc in selectedCurves:
+            longCurve = np.zeros(352)
+            longCurve[:len(sc)] = sc
+            tmp.append(longCurve)
+        print(len(tmp))
+        print(len(tmp[0]))
+        
+        x = np.array(tmp) - np.min(tmp)
+        x = tf.keras.preprocessing.sequence.pad_sequences(x)
+        prediction = model.predict(x)
+        starClass = []
+        for pred in prediction:
+            newclass = idxToClass[np.argmax(pred)]
+            starClass.append(newclass)
+        
+        colors = plt.rcParams["axes.prop_cycle"]()
+        plt.imshow(images[0], cmap="gray")
+        labels = [str(selectedStars[x]) + " - category: " + str(starClass[x]) for x in range(len(selectedStars))]
+        for i in range(len(selectedStars)):
+            c = next(colors)["color"]
+            print("Selected Star:", selectedStars[i][0], selectedStars[i][1])
+            plt.scatter(int(selectedStars[i][0]), int(selectedStars[i][1]), s=80, facecolors='none', edgecolors=c, label=labels[i])
+        plt.legend()
+        plt.show()
 
         return None
     

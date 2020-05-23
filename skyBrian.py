@@ -15,10 +15,9 @@ from scipy import signal as ss
 #starCoords = skyTracker.starCoords 
 
 
-def getBrians(images, starCoords): #Corba de llum
+def getBrians(images, starCoords, n = 10): #Corba de llum
     ohHiBrian = []
     tmp = np.array(images)
-    n = 10
     for star in starCoords:
         star_value = []
         xl = max(0, min(int(star[1])-n, len(images[0])))

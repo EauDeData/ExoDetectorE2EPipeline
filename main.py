@@ -17,8 +17,10 @@ cleanImages = images
 alignedImages = skyAlignment.cross_correlation_fourier(cleanImages)
 starCoords , viewCoords = skyTracker.getStarCoords(images[0])
 print("Getting curves...")
-lightCurve = skyBrian.getBrians(images, starCoords)
-lightCurves = skyBrian.getBetterBrians(lightCurve)
+lightCurve = skyBrian.getBrians(images, starCoords,n=10) #n parell
+lightCurves = np.array(skyBrian.getBetterBrians(lightCurve))
 print("Done!")
-    
-    
+for i in range(len(lightCurves)):
+    plt.plot(lightCurves[i])
+plt.show()
+
