@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu May 21 16:41:26 2020
+Created on Sat May 23 19:36:56 2020
 
 @author: gerard
 """
-import skyCleaner, skyAlignment, skyTracker, skyBrian
-import matplotlib.pyplot as plt
+
 import numpy as np
-import cv2
-import png
 import random
 import copy
 
@@ -52,8 +49,3 @@ def epoches(num, image, ff, fdf):
         for i in bests[0]:
             print(i, end = ' ')
     return bests
-
-#with open('foo_gray.png', 'wb') as f:
-#    writer = png.Writer(width=res.shape[1], height=res.shape[0], bitdepth=16, greyscale=True)
-#    zgray2list = res.tolist()
-#    writer.write(f, zgray2list)

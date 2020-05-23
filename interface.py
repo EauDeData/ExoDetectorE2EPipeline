@@ -84,7 +84,7 @@ class CreationMenu:
         fdf = str(self._input_fdf.get())
 
         self.images, df, ff, fdf = skyCleaner.loadImages(obs, df, ff, fdf)
-        #cleanImages = skyCleaner.cleanImages(images, df, ff, fdf)
+        cleanImages = skyCleaner.cleanImages(self.images, df, ff, fdf)
         cleanImages = self.images
         self.alignedImages = skyAlignment.cross_correlation_fourier(cleanImages)
         self.starCoords , self.viewCoords = skyTracker.getStarCoords(self.images[0])
@@ -146,7 +146,11 @@ class CreationMenu:
         model = classData.create_model(obj)
         model.load_weights('model.h5')
         idxToClass = {0: 64, 1: 65, 2: 67, 3: 6, 4: 42, 5: 15, 6: 16, 7: 52, 
-         8: 53, 9: 88, 10: 90, 11: 92, 12: 62, 13: 95}
+        8: 53, 9: 88, 10: 90, 11: 92, 12: 62, 13: 95}
+        classToName = {92: "Regular Star", 88:"Patient Variable Star",
+                       42: "Supernova", 90:"Supernova (II)", 65:"TGM", 
+                       16:"Binary Star or Exoplanetary Transit", 67:"?", 
+                       95:"?", 62:"?", 15: "?", 52: "?", 6:"?", 64:"?", 53:"?"}
         
         tmp = []
         for sc in selectedCurves:
@@ -161,7 +165,7 @@ class CreationMenu:
         prediction = model.predict(x)
         starClass = []
         for pred in prediction:
-            newclass = idxToClass[np.argmax(pred)]
+            newclass = classToName[idxToClass[np.argmax(pred)]]
             starClass.append(newclass)
         
         colors = plt.rcParams["axes.prop_cycle"]()
