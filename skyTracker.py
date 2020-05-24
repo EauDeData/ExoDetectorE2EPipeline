@@ -7,16 +7,20 @@ Created on Fri May  8 17:08:43 2020
 """
 
 
-import skyCleaner, skyAlignment
 import cv2
 import numpy as np
-
-#imagesOriginals = skyAlignment.imagesOriginals
-#alignedImages = skyAlignment.cross_correlation_fourier(imagesOriginals)
+from skimage.filters import threshold_triangle
 
 def getStarCoords(image):
+    """
+    params:
+        image: first image of the observation
+    return
+        coordinates of the stars detected
+    """
     print("Getting stars...")
-    t = 5200
+    t = threshold_triangle(image)  # Selected with skimage.filters.try_all_thresholds
+    print("Threshold:", t)
     thresh = cv2.threshold(image, t, image.max(), cv2.THRESH_BINARY)[1]
     contours = cv2.findContours(thresh.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]     
     star_coords = []
@@ -31,5 +35,3 @@ def getStarCoords(image):
         star_coords.append([mean_x, mean_y])
     print("Done!")
     return star_coords, [star_coords_x, star_coords_y]
-
-#starCoords, viewCoords = getStarCoords(alignedImages[0])

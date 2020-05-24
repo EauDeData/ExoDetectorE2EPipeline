@@ -7,8 +7,11 @@ Created on Sat May 23 19:38:17 2020
 """
 
 import numpy as np
-import sns
 import matplotlib.pyplot as plt
+
+"""
+This file contains all the functions used during the development of the project
+"""
 
 def normalize(image, bits = 8):
     tmp = image - image.min()
@@ -51,16 +54,7 @@ def cumHist(hist):
     for i in range(1, len(cummies)):
         cummies[i] = cummies[i-1] + hist[i]
     return cummies
-
-def histogram(raw_image, bins = 800, hist = True, kde = True): #hist: normed hist; kde = gaussian kernel density estimate
-    # Plot a histogram of the distribution of the pixels
-    sns.distplot(raw_image.ravel(), bins = bins, hist = hist,
-                 label=f'Pixel Mean {np.mean(raw_image):.4f} & Standard Deviation {np.std(raw_image):.4f}', kde = kde)
-    plt.legend(loc='upper center')
-    plt.title('Distribution of Pixel Intensities in the Image')
-    plt.xlabel('Pixel Intensity')
-    plt.ylabel('# Pixels in Image')
-               
+              
 def random_imshow(images):
     idx = np.random.randint(len(images), size=9)
     print("Idx:", idx)

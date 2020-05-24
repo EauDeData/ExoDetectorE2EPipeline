@@ -15,12 +15,14 @@ import tkinter as Tk
 import matplotlib.pyplot as plt
 
 class Plot:
+    """
+    Plot Interface:
+        This object is used to combine matplotlib plots with the Tkinter interfice
+    """
     def __init__(self, curveList, starList):
         self.master = Tk.Tk()
         self.master.resizable(width=False, height=False)
         self.plot(curveList, starList)
-        self.quit = Tk.Button(master=self.master, text="Quit", command=self._quit)
-        self.quit.pack(side=Tk.BOTTOM)
 
     def plot(self, curveList, starList):
         colors = plt.rcParams["axes.prop_cycle"]()
@@ -38,8 +40,6 @@ class Plot:
                 
         return None
         
-    def _quit(self):
-        self.master.quit()     # stops mainloop
-        self.master.destroy()
+
     
 

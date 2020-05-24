@@ -7,15 +7,10 @@ Created on Tue Apr 21 19:14:52 2020
 """
 
 #### Image processing ####
-import cv2
-import matplotlib.pyplot as plt
-from PIL import Image as pil
-import seaborn as sns
 import png
 
 #### Data sctructure and numerical support #####
 import numpy as np
-from scipy import signal as ss
 
 #### OS Support ####
 import os
@@ -27,18 +22,25 @@ from astropy.io import fits
 import geneticCleaner
 
 
-#### Data Flags for classification and usage #####
-
-#FLAT_FRAMES_EXPTIME = '5s'
-#FOLDER = './wasp52b/' #Where the observation is placed (wasp52b) (cleanObservations)
-#IMAGENAME_FLAG = 'TRE' #'TRE' #How we will identify images on a folder ('')
-#FDO_FLAG = 'CDO' #Flat Dark frames identifier
-#FFF_FLAG = 'FFF' #Flat Frames identifier
-#DF_FLAG = 'CDO' #Dark Frames identifier
-
-
 def loadImages(fileObs, fileDF, fileFF, fileFDF):
+    """
+    params:
+        fileObs: filename of the folder containing the observation frames
+        fileDF: filename of the folder containing the dark frames
+        fileFF: filename of the folder containing the flat frames
+        fileFDF: filename of the folder containing the flat dark frames
+    return
+        list containing the images loaded as numpy matrixs (dtype=int16)
+    """
+    
     print("Loading images...")
+    if (fileDF == fileFF and fileFF == fileFDF):
+        obs = os.listdir(fileObs)
+        obs.sort()
+        obs = [fileObs + name for name in obs]
+        images = [fits.open(image)[0].data for image in obs] #les imatges
+        print("Done!")
+        return images, [], [], []
     obs = os.listdir(fileObs)
     obs.sort()
     df = os.listdir(fileDF)
@@ -55,15 +57,34 @@ def loadImages(fileObs, fileDF, fileFF, fileFDF):
     df = [fits.open(image)[0].data for image in df]
     ff = [fits.open(image)[0].data for image in ff] #Flat frames son frames totalment iluminats per trobar pixels morts (trobarem pols a la ccd)
     fdf = [fits.open(image)[0].data for image in fdf] #Flat dark frames son els dark frams de l'exposició dels flat frames
+    print("Done!")
     return images, df, ff, fdf
 
 def save16bits(filename, img): #.png
+    """
+    params:
+        filename: name of the image to save
+        img: image to be saved
+    return
+        image saved as np.uint16
+    """
     with open(filename, 'wb') as f:
         writer = png.Writer(width=img.shape[1], height=img.shape[0], bitdepth=16, greyscale=True)
         zgray2list = img.tolist()
         writer.write(f, zgray2list)
 
 def cleanImages(images, df, ff, fdf, save = False):
+    """
+    params:
+        images: list of images to be cleaned
+        df: list of dark frames to clean the images
+        ff: list of flat frames to clean the images
+        fdf: list of flat dark frames to clean the flat frames
+        save: determines if the clean images should be saved
+    return
+        images cleaned using a genetically trained model
+    """
+    
     images = np.array(images, dtype=np.float64)
 
     # ff
@@ -75,7 +96,6 @@ def cleanImages(images, df, ff, fdf, save = False):
     print("Genetically cleaning images...")
     gene = geneticCleaner.epoches(100, images[0], meanff, meanfdf)
     gene = gene[0]
-    print(gene)
     epsilon = 0.00000001
     
     cleanIm = []
@@ -87,8 +107,8 @@ def cleanImages(images, df, ff, fdf, save = False):
             n = 0
             
     for im1 in images:
-        res = meanff / (gene[1] * meanfdf + epsilon)
-        res = im1 / (gene[0] * res + epsilon)
+        res = meanff / (abs(gene[2]) * meanfdf + epsilon)
+        res = im1 / (abs(gene[0]) * res + epsilon)
         res = res - res.min()
         res = res / res.max()
         res = res * (2**16-1)

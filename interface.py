@@ -6,18 +6,31 @@ Created on Thu May 21 16:16:52 2020
 @author: gerard
 """
 
-
 import tkinter as Tk
-import skyCleaner, skyAlignment, skyTracker, skyBrian, classData
+import skyCleaner, skyAlignment, skyTracker, skyCurve, classData
 from classData import Parser
 from PltInterface import Plot
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import pickle as pk
- 
 
 class CreationMenu:
+    """
+    Interface:
+        There are thre available options:
+            1. Load images: if only the observations are used the program will assume
+            that the frames are already clean. If all the folders are specified, the
+            program will clean the images first.
+            2. Get light curve: select the n stars you want to get the curve light from
+            and then press 'esc' or the middle button of your mouse. After that, a plot
+            will appea in your screen.
+            3. Classify star: select the n stars you want to classiy. After that, a plot
+            will appea in your screen with the corresponding labels. 
+        Requeriments:
+            - You must download the file 'model.h5' to load the weights of the classifier
+    """
+    
     def __init__(self):
         self.master = Tk.Tk()
         self.master.title("EDE2EP - ExoDetectorE2EPipeline")
@@ -29,7 +42,7 @@ class CreationMenu:
 
         self._input_observation = Tk.Entry(self.master)
         self._input_observation.pack()
-
+        
         self.df = Tk.Label(self.master, text="Folder containing the dark frames:", width=50) #flat dark 
         self.df.pack()
 
@@ -64,7 +77,7 @@ class CreationMenu:
         self.set_canvas_text()
         self._canvas.place(x=50, y=255)
         
-        self.quit = Tk.Button(master=self.master, text="Quit", command=self._quit)
+        self.quit = Tk.Button(master=self.master, text="Quit", command=self._quit, width=50, bg='snow', )
         self.quit.pack(side=Tk.BOTTOM)
 
         self.master.mainloop()
@@ -79,19 +92,18 @@ class CreationMenu:
     
     def load_button(self):
         obs = str(self._input_observation.get()) if str(self._input_observation.get())[-1] == '/' else str(self._input_observation.get())+'/'
-        df = str(self._input_df.get()) if str(self._input_df.get())[-1] == '/' else str(self._input_df.get())+'/'
-        ff = str(self._input_ff.get()) if str(self._input_ff.get())[-1] == '/' else str(self._input_ff.get())+'/'
-        fdf = str(self._input_fdf.get()) if str(self._input_fdf.get())[-1] == '/' else str(self._input_fdf.get())+'/'
-
+        df = '' if str(self._input_df.get()) == str(self._input_ff.get()) else str(self._input_df.get()) if str(self._input_df.get())[-1] == '/' else str(self._input_df.get())+'/'
+        ff = '' if str(self._input_ff.get()) == str(self._input_df.get()) else str(self._input_ff.get()) if str(self._input_ff.get())[-1] == '/' else str(self._input_ff.get())+'/'
+        fdf = '' if str(self._input_fdf.get()) == str(self._input_df.get()) else str(self._input_fdf.get()) if str(self._input_fdf.get())[-1] == '/' else str(self._input_fdf.get())+'/'
         self.images, df, ff, fdf = skyCleaner.loadImages(obs, df, ff, fdf)
-        #cleanImages = skyCleaner.cleanImages(self.images, df, ff, fdf)
-        cleanImages = self.images
+        if df == []:
+            cleanImages = self.images
+        else:
+            cleanImages = skyCleaner.cleanImages(self.images, df, ff, fdf)
         self.alignedImages = skyAlignment.cross_correlation_fourier(cleanImages)
-        self.starCoords , self.viewCoords = skyTracker.getStarCoords(self.images[0])
-        print("Getting curves...")
-        lightCurve = skyBrian.getBrians(self.images, self.starCoords)
-        self.lightCurves = skyBrian.getBetterBrians(lightCurve)
-        print("Done!")
+        self.starCoords , self.viewCoords = skyTracker.getStarCoords(self.alignedImages[0])
+        self.lightCurves = skyCurve.getCurves(self.images, self.starCoords)
+        
         
 
     def calculate_button(self):
@@ -104,7 +116,7 @@ class CreationMenu:
         #plt.scatter(self.viewCoords[0], self.viewCoords[1], s=80, facecolors='none', edgecolors='r')
         plt.imshow(images[0], cmap="gray")
         coords = plt.ginput(-1)
-        plt.show()
+        plt.draw()
         plt.close(1)
         coords = np.array(coords)
         starCoords = np.array(self.starCoords)
@@ -129,7 +141,7 @@ class CreationMenu:
         #plt.scatter(self.viewCoords[0], self.viewCoords[1], s=80, facecolors='none', edgecolors='r')
         plt.imshow(images[0], cmap="gray")
         coords = plt.ginput(-1)
-        plt.show()
+        plt.draw()
         plt.close(1)
         coords = np.array(coords)
         starCoords = np.array(self.starCoords)
@@ -184,4 +196,3 @@ class CreationMenu:
         self.master.quit()     # stops mainloop
         self.master.destroy()
     
-adri = CreationMenu()

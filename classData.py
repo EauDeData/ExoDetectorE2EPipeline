@@ -8,12 +8,14 @@ Created on Fri May 22 23:12:41 2020
 
 import numpy as np 
 import pickle as pk
-import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 class Parser:
+    """
+    Used to train the model, contains the data (light curves) and the labels (class)
+    """
     
     def __init__(self, csvFilename, csvMetadataFilename):
         file1 = pd.read_csv(csvFilename)
@@ -31,7 +33,6 @@ class Parser:
         print(self.numClases)
         self.lut = {x: num for num, x in enumerate(set(self.categories.values()))}
         self.maximum = max([max(x) for x in self.corves.values()])
-        self.invlut = {v:k for k, v in obj.lut.items()}
         del file1, corves, array, file2
 
     def __len__(self):
@@ -53,6 +54,9 @@ class Parser:
         return x, y
 
 def create_model(obj):
+    """
+    Model used: combination of conv1D and Dense layers
+    """
     max_features = 4000000
     max_len = 352
     
@@ -79,6 +83,9 @@ def create_model(obj):
     return model
 
 def train_model(obj):
+    """
+    Function used to train the model
+    """
    
     x = []
     y = []
@@ -120,6 +127,9 @@ def train_model(obj):
     print('test loss, test acc:', results)
     
 def get_obj():
+    """
+    Function used to load the pickle containing the data used for training/validation/test
+    """
     return pk.load(open('datasetRick.p', 'rb'))
 
 
